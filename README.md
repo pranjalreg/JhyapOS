@@ -97,24 +97,26 @@ Storage sits behind one interface — `WaitlistStore` in
 | `postgres` | Neon / Supabase / RDS / plain Postgres. Needs `DATABASE_URL`. |
 | `memory` | In-process only. Default elsewhere; **does not persist.** |
 
-### Before you launch
+### Deploying
 
-The in-memory default means production signups are silently lost. Pick a real
-store:
-
-```bash
-npm install pg @types/pg
-```
+`pg` is installed and the Postgres adapter is wired up. A deployment needs two
+server-side environment variables and nothing else:
 
 ```bash
-# .env.local — never commit, never prefix with NEXT_PUBLIC_
 WAITLIST_STORE=postgres
-DATABASE_URL=postgres://user:password@host:5432/database
+DATABASE_URL=postgres://user:password@host:5432/database?sslmode=require
 ```
 
-The table is created on first use and enforces uniqueness on `email` in the
-database rather than in application code, so two concurrent signups for the same
-address can't both insert.
+The `waitlist` table is created on the first request, so there is no migration
+step. Uniqueness is enforced by a database constraint rather than a
+read-then-write in application code, so concurrent signups for the same address
+cannot both insert — verified against real Postgres, including a 12-way race.
+
+If `WAITLIST_STORE` is missing in production the API returns **503** instead of
+accepting the signup. That is deliberate: the in-memory store lives inside a
+serverless function that is destroyed moments later, so accepting would mean
+telling someone "You're in." and losing them. A visible failure beats silent
+data loss.
 
 To use something else — Airtable, a CRM, Resend, a webhook — implement
 `WaitlistStore` and add a case to `getWaitlistStore()`. Nothing in the route or

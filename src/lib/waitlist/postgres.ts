@@ -61,7 +61,17 @@ export class PostgresWaitlistStore implements WaitlistStore {
 
   private constructor(private readonly pool: QueryClient) {}
 
-  static async create(): Promise<PostgresWaitlistStore> {
+  /**
+   * `client` is an injection point for tests — pass anything with a
+   * `query(text, values)` method and the adapter will use it instead of
+   * opening a real connection. Production passes nothing.
+   */
+  static async create(client?: QueryClient): Promise<PostgresWaitlistStore> {
+    if (client) {
+      await client.query(SCHEMA);
+      return new PostgresWaitlistStore(client);
+    }
+
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
       throw new Error(
@@ -69,29 +79,26 @@ export class PostgresWaitlistStore implements WaitlistStore {
       );
     }
 
-    // Resolved through a variable so neither TypeScript nor the bundler treats
-    // `pg` as a static dependency of the site — it only has to exist if you
-    // actually select this adapter.
-    const specifier = "pg";
-    let Pool: new (config: Record<string, unknown>) => QueryClient;
-    try {
-      ({ Pool } = (await import(/* webpackIgnore: true */ specifier)) as {
-        Pool: new (config: Record<string, unknown>) => QueryClient;
-      });
-    } catch {
-      throw new Error(
-        'WAITLIST_STORE=postgres requires the "pg" package. Run: npm install pg @types/pg',
-      );
-    }
+    /* Imported by string literal, not through a variable. Vercel traces the
+       serverless bundle statically, so a computed specifier would leave `pg`
+       out of the deployment and fail at runtime with "Cannot find module".
+       This import still only runs when the adapter is actually selected. */
+    const { Pool } = await import("pg");
 
     const pool = new Pool({
       connectionString,
       max: 4,
-      ssl: process.env.DATABASE_SSL === "false" ? false : { rejectUnauthorized: false },
+      // Managed Postgres (Neon, Supabase, Vercel, RDS) terminates TLS with a
+      // cert chain the Node client won't verify by default. Set
+      // DATABASE_SSL=false for a local server with no TLS at all.
+      ssl:
+        process.env.DATABASE_SSL === "false"
+          ? false
+          : { rejectUnauthorized: false },
     });
 
     await pool.query(SCHEMA);
-    return new PostgresWaitlistStore(pool);
+    return new PostgresWaitlistStore(pool as unknown as QueryClient);
   }
 
   async findByEmail(email: string) {

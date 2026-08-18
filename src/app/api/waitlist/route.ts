@@ -64,6 +64,25 @@ export async function POST(request: Request) {
   try {
     const store = await getWaitlistStore();
 
+    /* Refuse to accept a signup we know we'd throw away. The in-memory store
+       lives inside a serverless function that is destroyed moments later, so
+       returning "You're in." would be a lie the visitor can never recover
+       from. An honest 503 is worse UX and far better behaviour — and it makes
+       a misconfigured deploy obvious instead of silent. */
+    if (store.name === "memory" && process.env.NODE_ENV === "production") {
+      console.error(
+        "[waitlist] Refusing signup: WAITLIST_STORE is unset in production, so " +
+          "entries would not persist. Set WAITLIST_STORE=postgres and DATABASE_URL.",
+      );
+      return json(
+        {
+          ok: false,
+          error: "The waitlist isn't accepting signups right now. Please try again shortly.",
+        },
+        { status: 503 },
+      );
+    }
+
     const existing = await store.findByEmail(input.email);
     if (existing) {
       return json({ ok: true, alreadyJoined: true }, { status: 200 });
