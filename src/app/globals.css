@@ -1,0 +1,269 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * JhyapOS design system
+ *
+ * One dark surface stack, one accent, one typeface + one mono.
+ * Everything is built from tokens so the whole site can be re-keyed
+ * from this block alone.
+ * ------------------------------------------------------------------ */
+
+@theme {
+  /* Surfaces — a deliberate ladder, not arbitrary greys. */
+  --color-void: #060708;
+  --color-base: #0a0b0d;
+  --color-panel: #101214;
+  --color-raised: #16191c;
+  --color-elevated: #1d2125;
+
+  /* Ink */
+  --color-ink: #f2f3f5;
+  --color-ink-muted: #9aa0a6;
+  --color-ink-dim: #6b7178;
+  --color-ink-faint: #474d54;
+
+  /* Lines */
+  --color-line: rgba(255, 255, 255, 0.07);
+  --color-line-strong: rgba(255, 255, 255, 0.13);
+
+  /* The single accent: terminal amber. Used for live state, never decoration. */
+  --color-accent: #e3b341;
+  --color-accent-dim: #8a6d28;
+
+  /* Functional only */
+  --color-signal: #3fb950;
+  --color-cool: #58a6ff;
+
+  --font-sans: var(--font-inter), ui-sans-serif, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", system-ui, sans-serif;
+  --font-mono: var(--font-mono-jb), ui-monospace, "SF Mono", SFMono-Regular, Menlo,
+    monospace;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--color-line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-void);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss03";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: rgba(227, 179, 65, 0.24);
+    color: var(--color-ink);
+  }
+
+  /* Visible, on-brand focus. Never remove — only restyle. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  /* Headline defaults: tight, confident, optical sizing on. */
+  h1,
+  h2,
+  h3 {
+    font-optical-sizing: auto;
+    letter-spacing: -0.033em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 99px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.22);
+    background-clip: content-box;
+  }
+}
+
+@layer utilities {
+  /* Fine hairline grid — the technical substrate, kept nearly invisible. */
+  .bg-grid {
+    background-image: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.035) 1px,
+        transparent 1px
+      ),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  .bg-grid-fine {
+    background-image: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.028) 1px,
+        transparent 1px
+      ),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Static film grain. One tiny inline SVG, no runtime cost. */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Panel chrome shared by every workspace surface on the page. */
+  .panel {
+    background-color: var(--color-panel);
+    border: 1px solid var(--color-line);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.5),
+      0 24px 60px -20px rgba(0, 0, 0, 0.9),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.035);
+  }
+
+  .panel-flat {
+    background-color: var(--color-panel);
+    border: 1px solid var(--color-line);
+  }
+
+  /* Edge-fade for sequences that scroll under section boundaries. */
+  .mask-fade-y {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      black 12%,
+      black 88%,
+      transparent
+    );
+  }
+
+  .mask-fade-b {
+    mask-image: linear-gradient(to bottom, black 55%, transparent);
+  }
+
+  /* Softens the cut where pane content is taller than its pane — at narrow
+     widths text wraps to more lines than the layout budgets for, and a fade
+     reads as "there's more" rather than as a rendering mistake. */
+  .mask-clip-b {
+    mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent);
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Terminal caret — a real blink, not a fade loop. */
+@keyframes caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+.caret {
+  animation: caret 1.06s steps(1) infinite;
+}
+
+/* Slow ambient pulse for live/status dots. */
+@keyframes livedot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.86);
+  }
+}
+.livedot {
+  animation: livedot 2.4s var(--ease-in-out-soft) infinite;
+}
+
+/* Scanning sweep used by the "JhyapOS reads it" step. */
+@keyframes sweep {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(600%);
+  }
+}
+.sweep {
+  animation: sweep 2.6s var(--ease-in-out-soft) infinite;
+}
+
+/* ------------------------------------------------------------------ *
+ * Reduced motion: kill every decorative loop and transition.
+ * Scroll-linked components additionally opt out in JS via
+ * usePrefersReducedMotion so they render their resolved end state.
+ * ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .caret {
+    animation: none;
+    opacity: 1;
+  }
+  .livedot,
+  .sweep {
+    animation: none;
+  }
+}
